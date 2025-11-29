@@ -1,13 +1,18 @@
-<form [formGroup]="loginForm" (ngSubmit)="login()">
-  <mat-form-field appearance="fill">
+<form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+  <mat-form-field appearance="fill" class="full-width">
     <mat-label>Email</mat-label>
     <input matInput formControlName="email" type="email">
+    <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email requis</mat-error>
+    <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Email invalide</mat-error>
   </mat-form-field>
 
-  <mat-form-field appearance="fill">
+  <mat-form-field appearance="fill" class="full-width">
     <mat-label>Mot de passe</mat-label>
     <input matInput formControlName="password" type="password">
+    <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Mot de passe requis</mat-error>
   </mat-form-field>
 
-  <button mat-raised-button color="primary" type="submit">Se connecter</button>
+  <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid || isSubmitting">
+    Se connecter
+  </button>
 </form>

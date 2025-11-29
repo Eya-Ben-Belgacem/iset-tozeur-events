@@ -1,10 +1,13 @@
+// src/app/auth/register/register.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth'; 
 
 @Component({
   selector: 'app-register',
@@ -14,50 +17,64 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSelectModule,
   ],
-  template: `
-    <h2>Inscription</h2>
-    <form [formGroup]="registerForm" (ngSubmit)="register()">
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email" type="email">
-        <mat-error *ngIf="registerForm.get('email')?.hasError('required')">L'email est requis</mat-error>
-        <mat-error *ngIf="registerForm.get('email')?.hasError('email')">Email invalide</mat-error>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput formControlName="password" type="password">
-        <mat-error *ngIf="registerForm.get('password')?.hasError('required')">Le mot de passe est requis</mat-error>
-        <mat-error *ngIf="registerForm.get('password')?.hasError('minlength')">Minimum 6 caractères</mat-error>
-      </mat-form-field>
-
-      <button mat-raised-button color="primary" type="submit">S’inscrire</button>
-    </form>
-  `,
-  styles: [
-    `.full-width { width: 100%; margin-bottom: 16px; }`,
-    `h2 { text-align: center; }`
-  ]
+  templateUrl: './register.html',
+  styleUrls: []   
 })
 export class RegisterComponent {
-  registerForm: any;
+  registerForm!: FormGroup;   
+  isSubmitting = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    // Initialiser le form APRÈS que fb ait été injecté
     this.registerForm = this.fb.group({
+      name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      role: ['participant', Validators.required],
+      interests: ['']
     });
   }
 
-  register() {
-    const auth = getAuth();
-    const { email, password } = this.registerForm.value;
-    if (email && password) {
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => alert('Utilisateur créé !'))
-        .catch(err => alert(err.message));
+  async register() {
+    if (this.registerForm.invalid || this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    const val = this.registerForm.value;
+
+    const payload = {
+      name: val.name!,
+      email: val.email!.trim().toLowerCase(),
+      password: val.password!,
+      role: val.role! as 'participant' | 'organizer',
+      interests: val.interests
+        ? val.interests.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []
+    };
+
+    try {
+      await this.authService.register(payload);
+      alert('Inscription réussie !');
+      await this.router.navigate(['/login']);
+    } catch (err: any) {
+      console.error('Erreur register():', err);
+      if (err?.code === 'auth/email-already-in-use') {
+        alert('Cet email est déjà utilisé.');
+      } else if (err?.code === 'auth/weak-password') {
+        alert('Mot de passe trop faible. Minimum 6 caractères.');
+      } else if (err?.code === 'auth/invalid-email') {
+        alert('Email invalide.');
+      } else {
+        alert('Erreur : ' + (err?.message || err));
+      }
+    } finally {
+      this.isSubmitting = false;
     }
   }
 }

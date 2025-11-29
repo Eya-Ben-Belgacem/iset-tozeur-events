@@ -1,4 +1,10 @@
 <form [formGroup]="registerForm" (ngSubmit)="register()">
+
+  <mat-form-field appearance="fill">
+    <mat-label>Nom</mat-label>
+    <input matInput formControlName="name">
+  </mat-form-field>
+
   <mat-form-field appearance="fill">
     <mat-label>Email</mat-label>
     <input matInput formControlName="email" type="email">
@@ -9,5 +15,21 @@
     <input matInput formControlName="password" type="password">
   </mat-form-field>
 
-  <button mat-raised-button color="primary" type="submit">S’inscrire</button>
+  <mat-form-field appearance="fill">
+    <mat-label>Rôle</mat-label>
+    <mat-select formControlName="role">
+      <mat-option value="participant">Participant</mat-option>
+      <mat-option value="organizer">Organisateur</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Intérêts</mat-label>
+    <input matInput formControlName="interests">
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" [disabled]="registerForm.invalid || isSubmitting">
+    S’inscrire
+  </button>
+
 </form>

@@ -1,9 +1,12 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/login/login';
 import { RegisterComponent } from './auth/register/register';
+import { LoginComponent } from './auth/login/login';
+import { HomeComponent} from './events/home/home'; // créer une page d'accueil simple
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: '', component: HomeComponent },       // page d'accueil / dashboard
   { path: 'register', component: RegisterComponent },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: '**', redirectTo: '' }                // redirection pour les routes inconnues
 ];
